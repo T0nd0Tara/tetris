@@ -15,6 +15,8 @@
 #define BOARD_WIDTH  (10)
 #define BOARD_HEIGHT (20)
 
+#define NEXT_SHAPES (3)
+
 static int screen_width, screen_height;
 
 typedef uint8_t color; 
@@ -96,6 +98,28 @@ static struct shape shapes[] = {
     }},
 };
 
+static size_t shapes_len = sizeof(shapes) / sizeof(shapes[0]);
+
+int next_shapes[NEXT_SHAPES];
+struct {
+  size_t index;
+  uint8_t rotation;
+  size_t x, y;
+} current_shape;
+
+void next_shape() {
+  current_shape.index = next_shapes[0];
+  current_shape.rotation = 0;
+  current_shape.y = 0;
+  current_shape.x = BOARD_WIDTH / 2;
+
+  for (size_t i = 1; i < NEXT_SHAPES; i++) {
+    next_shapes[i - 1] = next_shapes[i];
+  }
+
+  next_shapes[NEXT_SHAPES - 1] = rand() % shapes_len;
+}
+
 void drawBoard() {
   const int scale_y = screen_height / BOARD_HEIGHT;
   const int scale_x = scale_y * CHAR_RATIO;
@@ -148,6 +172,11 @@ int main(int argc, char **argv) {
   for (color i = COLOR_BLACK; i <= COLOR_WHITE; ++i) 
     init_pair(i, COLOR_BLACK, i); 
   init_pair(DEV_DATA, COLOR_WHITE, COLOR_BLUE); 
+
+  for (int next_shape_it = 0; next_shape_it < NEXT_SHAPES; next_shape_it++) {
+    next_shapes[next_shape_it] = rand() % shapes_len;
+  }
+  next_shape();
 
   float wantedFrameTimeMS = 1000.0f / FPS;
 
