@@ -19,16 +19,22 @@
 #define NEXT_SHAPES (3)
 #define SHAPE_SIZE (4)
 
-#define KEY_UP    ('w')
-#define KEY_LEFT  ('a')
-#define KEY_DOWN  ('s')
-#define KEY_RIGHT ('d')
+#define TET_KEY_UP    ('w')
+#define TET_KEY_LEFT  ('a')
+#define TET_KEY_DOWN  ('s')
+#define TET_KEY_RIGHT ('d')
+#define TET_KEY_QUIT  (27)
+
+#define FRAME_H ('~')
+#define FRAME_V ('|')
+#define FRAME_C ('+')
 
 static int screen_width, screen_height;
 
 static int scale_y, scale_x;
 static int board_start_y, board_start_x;
 static float game_tic = 300.0f, counting_game_tic = 0;
+static bool shouldQuit = false;
 
 typedef uint8_t color; 
 
@@ -154,19 +160,19 @@ void next_shape() {
 void draw_board_frame() {
   attron(COLOR_PAIR(FRAME));
   for (int x = 0; x < BOARD_WIDTH * scale_x; x++) {
-    mvwaddch(SCREEN, board_start_y - 1, x + board_start_x, '-');
-    mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, x + board_start_x, '-');
+    mvwaddch(SCREEN, board_start_y - 1, x + board_start_x, FRAME_H);
+    mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, x + board_start_x, FRAME_H);
   }
   for (int y = 0; y < BOARD_HEIGHT * scale_y; y++) {
-    mvwaddch(SCREEN, y + board_start_y, board_start_x - 1, '|');
-    mvwaddch(SCREEN, y + board_start_y, board_start_x + BOARD_WIDTH * scale_x, '|');
+    mvwaddch(SCREEN, y + board_start_y, board_start_x - 1, FRAME_V);
+    mvwaddch(SCREEN, y + board_start_y, board_start_x + BOARD_WIDTH * scale_x, FRAME_V);
   }
 
   // corners
-  mvwaddch(SCREEN, board_start_y - 1, board_start_x - 1, '+');
-  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x - 1, '+');
-  mvwaddch(SCREEN, board_start_y - 1, board_start_x + BOARD_WIDTH * scale_x, '+');
-  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x  + BOARD_WIDTH * scale_x, '+');
+  mvwaddch(SCREEN, board_start_y - 1, board_start_x - 1, FRAME_C);
+  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x - 1, FRAME_C);
+  mvwaddch(SCREEN, board_start_y - 1, board_start_x + BOARD_WIDTH * scale_x, FRAME_C);
+  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x  + BOARD_WIDTH * scale_x, FRAME_C);
 
 
   attroff(COLOR_PAIR(FRAME));
@@ -233,12 +239,16 @@ void handle_keys() {
   int key_pressed;
   while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
     switch (key_pressed) {
-      case KEY_RIGHT: {
+      case TET_KEY_RIGHT: {
         current_shape.x = current_shape.x + 1;
         break;
       }
-      case KEY_LEFT: {
+      case TET_KEY_LEFT: {
         current_shape.x = current_shape.x - 1;
+        break;
+      }
+      case TET_KEY_QUIT: {
+        shouldQuit = true;
         break;
       }
     }
@@ -260,7 +270,7 @@ void update(float elapsedTime) {
   
   handle_keys();
 }
-bool loop(float elapsedTime) {
+void loop(float elapsedTime) {
   getmaxyx(SCREEN, screen_height, screen_width);
   scale_y = screen_height / BOARD_HEIGHT;
   scale_x = scale_y * CHAR_RATIO;
@@ -273,8 +283,6 @@ bool loop(float elapsedTime) {
   draw(elapsedTime);
 
   refresh();
-
-  return true;
 }
 int main(int argc, char **argv) {
   initscr(); // Init the library.
@@ -305,7 +313,6 @@ int main(int argc, char **argv) {
 
   float wantedFrameTimeMS = 1000.0f / FPS;
 
-  bool shouldContinue;
   float prevFrameTime = 0;
   do {
     float sleepNeeded = wantedFrameTimeMS - prevFrameTime;
@@ -313,12 +320,12 @@ int main(int argc, char **argv) {
       napms(sleepNeeded);
 
     clock_t start = clock();
-    shouldContinue = loop( wantedFrameTimeMS < prevFrameTime ? prevFrameTime : wantedFrameTimeMS);
+    loop(wantedFrameTimeMS < prevFrameTime ? prevFrameTime : wantedFrameTimeMS);
     // shouldContinue = loop(prevFrameTime);
     clock_t end = clock();
 
     prevFrameTime = 1000.0f * (float)(end - start) / CLOCKS_PER_SEC;
-  } while (shouldContinue);
+  } while (!shouldQuit);
 
   // getch(); // Wait for key press before exiting.
 
