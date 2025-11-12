@@ -19,6 +19,11 @@
 #define NEXT_SHAPES (3)
 #define SHAPE_SIZE (4)
 
+#define KEY_UP    ('w')
+#define KEY_LEFT  ('a')
+#define KEY_DOWN  ('s')
+#define KEY_RIGHT ('d')
+
 static int screen_width, screen_height;
 
 static int scale_y, scale_x;
@@ -109,7 +114,7 @@ int next_shapes[NEXT_SHAPES];
 struct {
   size_t index;
   uint8_t rotation;
-  size_t x, y;
+  int x, y;
 } current_shape;
 
 void draw_scaled_pixel(size_t x, size_t y) {
@@ -134,8 +139,8 @@ void draw_shape(size_t index, size_t x, size_t y, uint8_t rotation) {
 void next_shape() {
   current_shape.index = next_shapes[0];
   current_shape.rotation = 0;
-  current_shape.y = 0;
-  current_shape.x = BOARD_WIDTH / 2;
+  current_shape.y = -SHAPE_SIZE;
+  current_shape.x = (BOARD_WIDTH - SHAPE_SIZE) / 2;
 
   for (size_t i = 1; i < NEXT_SHAPES; i++) {
     next_shapes[i - 1] = next_shapes[i];
@@ -171,6 +176,45 @@ void draw_next_shapes() {
     attroff(COLOR_PAIR(shapes[next_shape].c));
   }
 }
+void draw_current_shape() {
+  draw_shape(current_shape.index, current_shape.x * scale_x + board_start_x, current_shape.y * scale_y + board_start_y, current_shape.rotation);
+}
+void draw_bg() {
+  attroff(COLOR_PAIR(COLOR_BLACK));
+  for (int y = 0; y < screen_width; y++)
+    for (int x = 0; x < screen_width; x++)
+      mvwaddch(SCREEN, y, x, ' ');
+  attron(COLOR_PAIR(COLOR_BLACK));
+}
+
+void draw_dev_data(float elapsedTime) {
+  attron(COLOR_PAIR(DEV_DATA));
+
+  char buff[50];
+  snprintf(buff, 50, "FPS: %f", 1000.0f / elapsedTime);
+  mvwprintw(SCREEN, 0, 0, buff);
+  attroff(COLOR_PAIR(DEV_DATA));
+}
+
+void draw(float elapsedTime) {
+  draw_bg();
+  draw_board();
+  draw_next_shapes();
+  draw_current_shape();
+  draw_dev_data(elapsedTime);
+}
+
+void update(float elapsedTime) {
+  int key_pressed;
+  while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
+    switch (key_pressed) {
+      case 'd': {
+        current_shape.x = current_shape.x + 1;
+        break;
+      }
+    }
+  }
+}
 bool loop(float elapsedTime) {
   getmaxyx(SCREEN, screen_height, screen_width);
   scale_y = screen_height / BOARD_HEIGHT;
@@ -179,15 +223,9 @@ bool loop(float elapsedTime) {
   board_start_y = (screen_height - scale_y * BOARD_HEIGHT) / 2;
   board_start_x = (screen_width - scale_x * BOARD_WIDTH) / 2;
 
-  attron(COLOR_PAIR(DEV_DATA));
 
-  char buff[50];
-  snprintf(buff, 50, "FPS: %f", 1000.0f / elapsedTime);
-  mvwprintw(SCREEN, 0, 0, buff);
-  attroff(COLOR_PAIR(DEV_DATA));
-
-  draw_board();
-  draw_next_shapes();
+  update(elapsedTime);
+  draw(elapsedTime);
 
   refresh();
 
@@ -200,6 +238,7 @@ int main(int argc, char **argv) {
   keypad(SCREEN,
          TRUE); // Enable extended character (e.g. F-keys, numpad) input.
   curs_set(0);  // Change cursor appearance. 0 invisible, 1 normal, 2 strong.
+  nodelay(SCREEN, true); // Don't wait for user input
   // srand(time(0));
   srand(0);
 
