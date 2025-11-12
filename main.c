@@ -28,13 +28,15 @@ static int screen_width, screen_height;
 
 static int scale_y, scale_x;
 static int board_start_y, board_start_x;
+static float game_tic = 300.0f, counting_game_tic = 0;
 
 typedef uint8_t color; 
 
-color board[BOARD_HEIGHT][BOARD_WIDTH] = { COLOR_WHITE };
+color board[BOARD_HEIGHT][BOARD_WIDTH] = { COLOR_BLACK };
 
 enum colors : uint8_t {
   DEV_DATA = COLOR_WHITE + 1,
+  FRAME,
 };
 
 struct shape {
@@ -149,11 +151,34 @@ void next_shape() {
   next_shapes[NEXT_SHAPES - 1] = rand() % shapes_len;
 }
 
+void draw_board_frame() {
+  attron(COLOR_PAIR(FRAME));
+  for (int x = 0; x < BOARD_WIDTH * scale_x; x++) {
+    mvwaddch(SCREEN, board_start_y - 1, x + board_start_x, '-');
+    mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, x + board_start_x, '-');
+  }
+  for (int y = 0; y < BOARD_HEIGHT * scale_y; y++) {
+    mvwaddch(SCREEN, y + board_start_y, board_start_x - 1, '|');
+    mvwaddch(SCREEN, y + board_start_y, board_start_x + BOARD_WIDTH * scale_x, '|');
+  }
+
+  // corners
+  mvwaddch(SCREEN, board_start_y - 1, board_start_x - 1, '+');
+  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x - 1, '+');
+  mvwaddch(SCREEN, board_start_y - 1, board_start_x + BOARD_WIDTH * scale_x, '+');
+  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x  + BOARD_WIDTH * scale_x, '+');
+
+
+  attroff(COLOR_PAIR(FRAME));
+}
+
 void draw_board() {
+  draw_board_frame();
 
   for (int y = 0; y < BOARD_HEIGHT; ++y) {
     for (int x = 0; x < BOARD_WIDTH; ++x) {
-      color c = (x + y) % 2 == 0 ? COLOR_WHITE : COLOR_MAGENTA;
+      // color c = (x + y) % 2 == 0 ? COLOR_WHITE : COLOR_MAGENTA;
+      color c = board[y][x];
       attron(COLOR_PAIR(c));
       draw_scaled_pixel(x * scale_x + board_start_x, y * scale_y + board_start_y);
 
@@ -204,16 +229,36 @@ void draw(float elapsedTime) {
   draw_dev_data(elapsedTime);
 }
 
-void update(float elapsedTime) {
+void handle_keys() {
   int key_pressed;
   while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
     switch (key_pressed) {
-      case 'd': {
+      case KEY_RIGHT: {
         current_shape.x = current_shape.x + 1;
+        break;
+      }
+      case KEY_LEFT: {
+        current_shape.x = current_shape.x - 1;
         break;
       }
     }
   }
+}
+
+void tick() {
+  current_shape.y++;
+}
+
+void update(float elapsedTime) {
+  counting_game_tic += elapsedTime;
+
+  while (counting_game_tic > game_tic) {
+    counting_game_tic -= game_tic;
+
+    tick();
+  }
+  
+  handle_keys();
 }
 bool loop(float elapsedTime) {
   getmaxyx(SCREEN, screen_height, screen_width);
@@ -251,6 +296,7 @@ int main(int argc, char **argv) {
   for (color i = COLOR_BLACK; i <= COLOR_WHITE; ++i) 
     init_pair(i, COLOR_BLACK, i); 
   init_pair(DEV_DATA, COLOR_WHITE, COLOR_BLUE); 
+  init_pair(FRAME, COLOR_WHITE, COLOR_BLACK); 
 
   for (int next_shape_it = 0; next_shape_it < NEXT_SHAPES; next_shape_it++) {
     next_shapes[next_shape_it] = rand() % shapes_len;
