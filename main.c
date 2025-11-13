@@ -281,11 +281,15 @@ bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
     for (int x_it = 0; x_it < SHAPE_SIZE; ++x_it) {
       int pos_x = x_it + x;
       int pos_y = y_it + y;
-      if (pos_y < 0 || pos_x < 0) continue;
-      if (BOARD_WIDTH <= pos_x) continue;
+      if (pos_y < 0) continue;
 
-      if (shape[y_it][x_it] && (board[pos_y][pos_x] != BOARD_EMPTY || BOARD_HEIGHT <= pos_y))
-        return true;
+      if (shape[y_it][x_it]){
+        if (BOARD_HEIGHT <= pos_y
+          || pos_x < 0 || BOARD_WIDTH <= pos_x
+          || board[pos_y][pos_x] != BOARD_EMPTY 
+        )
+          return true;
+      }
     }
   }
 
@@ -297,15 +301,19 @@ void handle_keys() {
   while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
     switch (key_pressed) {
       case TET_KEY_RIGHT: {
-        current_shape.x = current_shape.x + 1;
+        if (!is_shape_hit(current_shape.index, current_shape.rotation, current_shape.x + 1, current_shape.y))
+          current_shape.x++;
         break;
       }
       case TET_KEY_LEFT: {
-        current_shape.x = current_shape.x - 1;
+        if (!is_shape_hit(current_shape.index, current_shape.rotation, current_shape.x - 1, current_shape.y))
+          current_shape.x--;
         break;
       }
       case TET_KEY_UP: {
-        current_shape.rotation = (current_shape.rotation + 1) % ROTATION_COUNT;
+        int next_rotation = (current_shape.rotation + 1) % ROTATION_COUNT;
+        if (!is_shape_hit(current_shape.index, next_rotation, current_shape.x, current_shape.y))
+          current_shape.rotation = next_rotation;
         break;
       }
       case TET_KEY_DOWN: {
