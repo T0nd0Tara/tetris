@@ -16,8 +16,11 @@
 #define BOARD_WIDTH  (10)
 #define BOARD_HEIGHT (20)
 
+#define BOARD_EMPTY (COLOR_BLACK)
+
 #define NEXT_SHAPES (3)
 #define SHAPE_SIZE (4)
+#define ROTAION_COUNT (4)
 
 #define TET_KEY_UP    ('w')
 #define TET_KEY_LEFT  ('a')
@@ -38,7 +41,7 @@ static bool shouldQuit = false;
 
 typedef uint8_t color; 
 
-color board[BOARD_HEIGHT][BOARD_WIDTH] = { COLOR_BLACK };
+color board[BOARD_HEIGHT][BOARD_WIDTH] = { BOARD_EMPTY };
 
 enum colors : uint8_t {
   DEV_DATA = COLOR_WHITE + 1,
@@ -132,11 +135,44 @@ void draw_scaled_pixel(size_t x, size_t y) {
 
 }
 
+/*
+ O0 = (x, y)
+ [O, _, _, _]
+ [_, _, _, _]
+ [_, _, _, _]
+ [_, _, _, _]
+
+ O1 = (W - y - 1, x) = (W - O0.y - 1, O0.x)
+ [_, _, _, O]
+ [_, _, _, _]
+ [_, _, _, _]
+ [_, _, _, _]
+ 
+ On = (W - O(n-1).y - 1, O(n-1).x)
+*/
+void get_shape(size_t index, uint8_t rotation, bool out_buffer[SHAPE_SIZE][SHAPE_SIZE]) {
+  for (int y = 0; y < SHAPE_SIZE; y++) {
+    for (int x = 0; x < SHAPE_SIZE; x++) {
+      int out_buffer_y = y;
+      int out_buffer_x = x;
+      // TODO: Maybe find a better way, which is not iterative
+      for (uint8_t rot_it = 0; rot_it < rotation; ++rot_it) {
+        int temp_y = out_buffer_y;
+        out_buffer_y = out_buffer_x;
+        out_buffer_x = SHAPE_SIZE - temp_y - 1;
+      }
+      out_buffer[out_buffer_y][out_buffer_x] = shapes[index].shape[y][x];
+    }
+  }
+}
+
 void draw_shape(size_t index, size_t x, size_t y, uint8_t rotation) {
   attron(COLOR_PAIR(shapes[index].c));
+  bool rot_shape[SHAPE_SIZE][SHAPE_SIZE];
+  get_shape(index, rotation, rot_shape);
   for (size_t y_it = 0; y_it < SHAPE_SIZE; y_it++) {
     for (size_t x_it = 0; x_it < SHAPE_SIZE; x_it++) {
-      if (shapes[index].shape[y_it][x_it])
+      if (rot_shape[y_it][x_it])
         draw_scaled_pixel(x + x_it * scale_x, y + y_it * scale_y);
     }
   }
@@ -247,6 +283,10 @@ void handle_keys() {
         current_shape.x = current_shape.x - 1;
         break;
       }
+      case TET_KEY_UP: {
+        current_shape.rotation = (current_shape.rotation + 1) % ROTAION_COUNT;
+        break;
+      }
       case TET_KEY_QUIT: {
         shouldQuit = true;
         break;
@@ -255,7 +295,37 @@ void handle_keys() {
   }
 }
 
+bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
+  if (y > BOARD_HEIGHT) return true;
+
+  bool shape[SHAPE_SIZE][SHAPE_SIZE];
+  get_shape(index, rotation, shape);
+
+  for (int y_it = 0; y_it < SHAPE_SIZE; ++y) {
+    for (int x_it = 0; x_it < SHAPE_SIZE; ++x) {
+      int pos_x = x_it + x;
+      int pos_y = y_it + y;
+
+      if (shape[y_it][x_it] && board[pos_y][pos_x] != BOARD_EMPTY)
+        return true;
+    }
+  }
+
+  return false;
+}
+
+void stick_current_shape() {
+  for (int y = 0; y < SHAPE_SIZE; ++y) {
+    for (int x = 0; x < SHAPE_SIZE; ++x) {
+      // if
+    }
+  }
+}
 void tick() {
+  if (is_shape_hit(current_shape.index, current_shape.rotation, current_shape.x, current_shape.y + 1)) {
+
+
+  }
   current_shape.y++;
 }
 
@@ -292,8 +362,8 @@ int main(int argc, char **argv) {
          TRUE); // Enable extended character (e.g. F-keys, numpad) input.
   curs_set(0);  // Change cursor appearance. 0 invisible, 1 normal, 2 strong.
   nodelay(SCREEN, true); // Don't wait for user input
-  // srand(time(0));
-  srand(0);
+  srand(time(0));
+  // srand();
 
   if (has_colors() == FALSE) {
     endwin();
