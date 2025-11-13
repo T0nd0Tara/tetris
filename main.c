@@ -150,6 +150,7 @@ void draw_scaled_pixel(size_t x, size_t y) {
  
  On = (W - O(n-1).y - 1, O(n-1).x)
 */
+// TODO: cache per frame
 void get_shape(size_t index, uint8_t rotation, bool out_buffer[SHAPE_SIZE][SHAPE_SIZE]) {
   for (int y = 0; y < SHAPE_SIZE; y++) {
     for (int x = 0; x < SHAPE_SIZE; x++) {
@@ -296,17 +297,17 @@ void handle_keys() {
 }
 
 bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
-  if (y > BOARD_HEIGHT) return true;
-
   bool shape[SHAPE_SIZE][SHAPE_SIZE];
   get_shape(index, rotation, shape);
 
-  for (int y_it = 0; y_it < SHAPE_SIZE; ++y) {
-    for (int x_it = 0; x_it < SHAPE_SIZE; ++x) {
+  for (int y_it = 0; y_it < SHAPE_SIZE; ++y_it) {
+    for (int x_it = 0; x_it < SHAPE_SIZE; ++x_it) {
       int pos_x = x_it + x;
       int pos_y = y_it + y;
+      if (pos_y < 0 || pos_x < 0) continue;
+      if (BOARD_WIDTH <= pos_x) continue;
 
-      if (shape[y_it][x_it] && board[pos_y][pos_x] != BOARD_EMPTY)
+      if (shape[y_it][x_it] && (board[pos_y][pos_x] != BOARD_EMPTY || BOARD_HEIGHT <= pos_y))
         return true;
     }
   }
@@ -315,16 +316,19 @@ bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
 }
 
 void stick_current_shape() {
+  bool shape[SHAPE_SIZE][SHAPE_SIZE];
+  get_shape(current_shape.index, current_shape.rotation, shape);
   for (int y = 0; y < SHAPE_SIZE; ++y) {
     for (int x = 0; x < SHAPE_SIZE; ++x) {
-      // if
+      if (shape[y][x]) board[current_shape.y + y][current_shape.x + x] = shapes[current_shape.index].c;
     }
   }
 }
+
 void tick() {
   if (is_shape_hit(current_shape.index, current_shape.rotation, current_shape.x, current_shape.y + 1)) {
-
-
+    stick_current_shape();
+    next_shape();
   }
   current_shape.y++;
 }
