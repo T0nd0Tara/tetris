@@ -272,29 +272,6 @@ void draw(float elapsedTime) {
   draw_dev_data(elapsedTime);
 }
 
-void handle_keys() {
-  int key_pressed;
-  while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
-    switch (key_pressed) {
-      case TET_KEY_RIGHT: {
-        current_shape.x = current_shape.x + 1;
-        break;
-      }
-      case TET_KEY_LEFT: {
-        current_shape.x = current_shape.x - 1;
-        break;
-      }
-      case TET_KEY_UP: {
-        current_shape.rotation = (current_shape.rotation + 1) % ROTAION_COUNT;
-        break;
-      }
-      case TET_KEY_QUIT: {
-        shouldQuit = true;
-        break;
-      }
-    }
-  }
-}
 
 bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
   bool shape[SHAPE_SIZE][SHAPE_SIZE];
@@ -313,6 +290,35 @@ bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
   }
 
   return false;
+}
+
+void handle_keys() {
+  int key_pressed;
+  while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
+    switch (key_pressed) {
+      case TET_KEY_RIGHT: {
+        current_shape.x = current_shape.x + 1;
+        break;
+      }
+      case TET_KEY_LEFT: {
+        current_shape.x = current_shape.x - 1;
+        break;
+      }
+      case TET_KEY_UP: {
+        current_shape.rotation = (current_shape.rotation + 1) % ROTAION_COUNT;
+        break;
+      }
+      case TET_KEY_DOWN: {
+        if (!is_shape_hit(current_shape.index, current_shape.rotation, current_shape.x, current_shape.y + 1))
+          current_shape.y++;
+        break;
+      }
+      case TET_KEY_QUIT: {
+        shouldQuit = true;
+        break;
+      }
+    }
+  }
 }
 
 void stick_current_shape() {
