@@ -20,7 +20,7 @@
 
 #define NEXT_SHAPES (3)
 #define SHAPE_SIZE (4)
-#define ROTAION_COUNT (4)
+#define ROTATION_COUNT (4)
 
 #define TET_KEY_UP    ('w')
 #define TET_KEY_LEFT  ('a')
@@ -305,7 +305,7 @@ void handle_keys() {
         break;
       }
       case TET_KEY_UP: {
-        current_shape.rotation = (current_shape.rotation + 1) % ROTAION_COUNT;
+        current_shape.rotation = (current_shape.rotation + 1) % ROTATION_COUNT;
         break;
       }
       case TET_KEY_DOWN: {
