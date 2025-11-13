@@ -281,13 +281,14 @@ bool is_shape_hit(size_t index, uint8_t rotation, int x, int y) {
     for (int x_it = 0; x_it < SHAPE_SIZE; ++x_it) {
       int pos_x = x_it + x;
       int pos_y = y_it + y;
-      if (pos_y < 0) continue;
 
       if (shape[y_it][x_it]){
         if (BOARD_HEIGHT <= pos_y
           || pos_x < 0 || BOARD_WIDTH <= pos_x
-          || board[pos_y][pos_x] != BOARD_EMPTY 
         )
+          return true;
+
+        if (board[pos_y][pos_x] != BOARD_EMPTY && pos_y >= 0)
           return true;
       }
     }
