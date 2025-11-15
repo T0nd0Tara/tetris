@@ -4,7 +4,6 @@
 #include <ncurses.h>
 #endif
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -420,7 +419,6 @@ int main(int argc, char **argv) {
   curs_set(0);  // Change cursor appearance. 0 invisible, 1 normal, 2 strong.
   nodelay(SCREEN, true); // Don't wait for user input
   srand(time(0));
-  // srand();
 
   if (has_colors() == FALSE) {
     endwin();
@@ -449,13 +447,10 @@ int main(int argc, char **argv) {
 
     clock_t start = clock();
     loop(wantedFrameTimeMS < prevFrameTime ? prevFrameTime : wantedFrameTimeMS);
-    // shouldContinue = loop(prevFrameTime);
     clock_t end = clock();
 
     prevFrameTime = 1000.0f * (float)(end - start) / CLOCKS_PER_SEC;
   } while (!shouldQuit);
-
-  // getch(); // Wait for key press before exiting.
 
   endwin(); // Main ncurses clean-up.
 
