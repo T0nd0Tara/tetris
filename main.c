@@ -27,6 +27,7 @@
 #define TET_KEY_DOWN ('s')
 #define TET_KEY_RIGHT ('d')
 #define TET_KEY_QUIT (27)
+#define TET_KEY_HARD_DROP (' ')
 
 #define FRAME_H ('~')
 #define FRAME_V ('|')
@@ -317,6 +318,17 @@ void update_current_shape_max_y() {
   }
 }
 
+void stick_current_shape() {
+  bool shape[SHAPE_SIZE][SHAPE_SIZE];
+  get_shape(current_shape.index, current_shape.rotation, shape);
+  for (int y = 0; y < SHAPE_SIZE; ++y) {
+    for (int x = 0; x < SHAPE_SIZE; ++x) {
+      if (shape[y][x])
+        board[current_shape.y + y][current_shape.x + x] =
+            shapes[current_shape.index].c;
+    }
+  }
+}
 void handle_keys() {
   int key_pressed;
   while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
@@ -357,18 +369,12 @@ void handle_keys() {
       shouldQuit = true;
       break;
     }
+    case TET_KEY_HARD_DROP: {
+      current_shape.y = current_shape.max_y;
+      stick_current_shape();
+      next_shape();
+      break;
     }
-  }
-}
-
-void stick_current_shape() {
-  bool shape[SHAPE_SIZE][SHAPE_SIZE];
-  get_shape(current_shape.index, current_shape.rotation, shape);
-  for (int y = 0; y < SHAPE_SIZE; ++y) {
-    for (int x = 0; x < SHAPE_SIZE; ++x) {
-      if (shape[y][x])
-        board[current_shape.y + y][current_shape.x + x] =
-            shapes[current_shape.index].c;
     }
   }
 }
