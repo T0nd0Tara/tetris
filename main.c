@@ -25,6 +25,7 @@
 #define TET_KEY_LEFT ('a')
 #define TET_KEY_DOWN ('s')
 #define TET_KEY_RIGHT ('d')
+#define TET_KEY_HOLD ('f')
 #define TET_KEY_QUIT (27)
 #define TET_KEY_HARD_DROP (' ')
 
@@ -36,8 +37,9 @@ static int screen_width, screen_height;
 
 static int scale_y, scale_x;
 static int board_start_y, board_start_x;
-static float game_tic = 300.0f, counting_game_tic = 0;
+static float game_tic = 500.0f, counting_game_tic = 0;
 static bool shouldQuit = false;
+static int hold_shape = -1; static bool can_hold = true;
 
 typedef uint8_t color;
 
@@ -180,11 +182,15 @@ void draw_shape(size_t index, size_t x, size_t y, uint8_t rotation,
 }
 
 void update_current_shape_max_y();
-void next_shape() {
-  current_shape.index = next_shapes[0];
+void reset_current_shape() {
+  current_shape.index = -1;
   current_shape.rotation = 0;
   current_shape.y = -SHAPE_SIZE;
   current_shape.x = (BOARD_WIDTH - SHAPE_SIZE) / 2;
+}
+void next_shape() {
+  reset_current_shape();
+  current_shape.index = next_shapes[0];
   update_current_shape_max_y();
 
   for (size_t i = 1; i < NEXT_SHAPES; i++) {
@@ -276,10 +282,15 @@ void draw_dev_data(float elapsedTime) {
   mvwprintw(SCREEN, 0, 0, buff);
   attroff(COLOR_PAIR(DEV_DATA));
 }
+void draw_hold_shape() {
+  int start_x = board_start_x - 1 - scale_x * SHAPE_SIZE;
+  draw_shape(hold_shape, start_x, board_start_y, 0, true);
+}
 
 void draw(float elapsedTime) {
   draw_bg();
   draw_board();
+  draw_hold_shape();
   draw_next_shapes();
   draw_current_shape();
   draw_dev_data(elapsedTime);
@@ -327,7 +338,23 @@ void stick_current_shape() {
             shapes[current_shape.index].c;
     }
   }
+
+  can_hold = true;
 }
+
+void switch_hold() {
+  if (hold_shape == -1) {
+    hold_shape = current_shape.index;
+    next_shape();
+    return;
+  }
+  int temp_hold_shape = hold_shape;
+  hold_shape = current_shape.index;
+  reset_current_shape();
+  current_shape.index = temp_hold_shape;
+  update_current_shape_max_y();
+}
+
 void handle_keys() {
   int key_pressed;
   while (key_pressed = wgetch(SCREEN), key_pressed != ERR) {
@@ -366,6 +393,13 @@ void handle_keys() {
     }
     case TET_KEY_QUIT: {
       shouldQuit = true;
+      break;
+    }
+    case TET_KEY_HOLD: {
+      if (can_hold) {
+        switch_hold();
+        can_hold = false;
+      }
       break;
     }
     case TET_KEY_HARD_DROP: {
