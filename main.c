@@ -9,6 +9,12 @@
 #include <time.h>
 
 #define SCREEN (stdscr)
+#define FRAME_HO ('~')
+#define FRAME_VE ('|')
+#define FRAME_CO ('+')
+
+#include "frame.h"
+
 #define FPS (120.0f)
 #define CHAR_RATIO (2.0f)
 
@@ -29,17 +35,14 @@
 #define TET_KEY_QUIT (27)
 #define TET_KEY_HARD_DROP (' ')
 
-#define FRAME_H ('~')
-#define FRAME_V ('|')
-#define FRAME_C ('+')
-
 static int screen_width, screen_height;
 
 static int scale_y, scale_x;
 static int board_start_y, board_start_x;
 static float game_tic = 500.0f, counting_game_tic = 0;
 static bool shouldQuit = false;
-static int hold_shape = -1; static bool can_hold = true;
+static int hold_shape = -1;
+static bool can_hold = true;
 
 typedef uint8_t color;
 
@@ -200,33 +203,14 @@ void next_shape() {
   next_shapes[NEXT_SHAPES - 1] = rand() % shapes_len;
 }
 
-void draw_board_frame() {
-  attron(COLOR_PAIR(FRAME));
-  for (int x = 0; x < BOARD_WIDTH * scale_x; x++) {
-    mvwaddch(SCREEN, board_start_y - 1, x + board_start_x, FRAME_H);
-    mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, x + board_start_x,
-             FRAME_H);
-  }
-  for (int y = 0; y < BOARD_HEIGHT * scale_y; y++) {
-    mvwaddch(SCREEN, y + board_start_y, board_start_x - 1, FRAME_V);
-    mvwaddch(SCREEN, y + board_start_y, board_start_x + BOARD_WIDTH * scale_x,
-             FRAME_V);
-  }
-
-  // corners
-  mvwaddch(SCREEN, board_start_y - 1, board_start_x - 1, FRAME_C);
-  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y, board_start_x - 1,
-           FRAME_C);
-  mvwaddch(SCREEN, board_start_y - 1, board_start_x + BOARD_WIDTH * scale_x,
-           FRAME_C);
-  mvwaddch(SCREEN, board_start_y + BOARD_HEIGHT * scale_y,
-           board_start_x + BOARD_WIDTH * scale_x, FRAME_C);
-
-  attroff(COLOR_PAIR(FRAME));
-}
-
 void draw_board() {
-  draw_board_frame();
+  struct Frame board_frame = {
+      .x = board_start_x - 1,
+      .y = board_start_y - 1,
+      .w = BOARD_WIDTH * scale_x + 1,
+      .h = BOARD_HEIGHT * scale_y + 1,
+  };
+  add_frame(board_frame);
 
   for (int y = 0; y < BOARD_HEIGHT; ++y) {
     for (int x = 0; x < BOARD_WIDTH; ++x) {
@@ -253,6 +237,14 @@ void draw_next_shapes() {
     draw_shape(next_shape, next_shapes_start_x, y, 0, true);
     attroff(COLOR_PAIR(shapes[next_shape].c));
   }
+
+  struct Frame frame = {
+      .x = next_shapes_start_x - 1,
+      .y = board_start_y - 1,
+      .w = SHAPE_SIZE * scale_x + 1,
+      .h = SHAPE_SIZE * scale_y * NEXT_SHAPES + 1,
+  };
+  add_frame(frame);
 }
 void draw_current_shape() {
   // SHADOW
@@ -285,13 +277,28 @@ void draw_dev_data(float elapsedTime) {
 void draw_hold_shape() {
   int start_x = board_start_x - 1 - scale_x * SHAPE_SIZE;
   draw_shape(hold_shape, start_x, board_start_y, 0, true);
+
+  struct Frame frame = {
+      .x = start_x - 1,
+      .y = board_start_y - 1,
+      .w = SHAPE_SIZE * scale_x + 1,
+      .h = SHAPE_SIZE * scale_y + 1,
+  };
+
+  add_frame(frame);
 }
 
 void draw(float elapsedTime) {
+  clean_frames();
   draw_bg();
   draw_board();
   draw_hold_shape();
   draw_next_shapes();
+
+  attron(COLOR_PAIR(FRAME));
+  draw_frames(SCREEN);
+  attroff(COLOR_PAIR(FRAME));
+
   draw_current_shape();
   draw_dev_data(elapsedTime);
 }
