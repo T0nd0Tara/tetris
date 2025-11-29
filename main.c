@@ -243,6 +243,7 @@ void draw_next_shapes() {
       .y = board_start_y - 1,
       .w = SHAPE_SIZE * scale_x + 1,
       .h = SHAPE_SIZE * scale_y * NEXT_SHAPES + 1,
+      .title = "Next",
   };
   add_frame(frame);
 }
@@ -283,6 +284,7 @@ void draw_hold_shape() {
       .y = board_start_y - 1,
       .w = SHAPE_SIZE * scale_x + 1,
       .h = SHAPE_SIZE * scale_y + 1,
+      .title = "Hold",
   };
 
   add_frame(frame);

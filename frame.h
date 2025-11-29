@@ -8,6 +8,7 @@ struct Frame {
   int y;
   int w;
   int h;
+  const char *title;
 };
 
 void add_frame(struct Frame);

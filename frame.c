@@ -1,4 +1,6 @@
 #include "frame.h"
+#include <ncurses.h>
+#include <string.h>
 
 #ifndef FRAME_HO
 #define FRAME_HO ('~')
@@ -11,6 +13,10 @@
 #ifndef FRAME_CO
 #define FRAME_CO ('+')
 #endif // !FRAME_CO
+
+#ifndef FRAME_TITLE_PADDING
+#define FRAME_TITLE_PADDING (1)
+#endif // !FRAME_TITLE_PADDING
 
 #define MAX_FRAMES (5)
 
@@ -30,6 +36,9 @@ void draw_frame_sides(struct Frame frame, WINDOW *screen) {
   for (int y = frame.y; y < frame.y + frame.h; y++) {
     mvwaddch(screen, y, frame.x, FRAME_VE);
     mvwaddch(screen, y, frame.x + frame.w, FRAME_VE);
+  }
+  if (frame.title && strlen(frame.title) + FRAME_TITLE_PADDING < frame.w) {
+    mvwaddstr(screen, frame.y, frame.x + FRAME_TITLE_PADDING + 1, frame.title);
   }
 }
 
