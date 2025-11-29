@@ -1,3 +1,5 @@
+#include <stdbool.h>
+#include <stddef.h>
 #ifdef __MINGw32__
 #include <ncurses/ncurses.h>
 #else
@@ -337,6 +339,29 @@ void update_current_shape_max_y() {
   }
 }
 
+bool is_row_filled(size_t y) {
+  for (size_t x = 0; x < BOARD_WIDTH; x++) {
+    if (board[y][x] == BOARD_EMPTY)
+      return false;
+  }
+  return true;
+}
+
+void clear_row(int y) {
+  for (int row = y; row > 0; row--) {
+    for (int x = 0; x < BOARD_WIDTH; x++)
+      board[row][x] = board[row - 1][x];
+  }
+  for (int x = 0; x < BOARD_WIDTH; x++)
+    board[0][x] = BOARD_EMPTY;
+}
+void clear_current_shape_rows() {
+  for (size_t y = current_shape.y; y < current_shape.y + SHAPE_SIZE; y++) {
+    if (is_row_filled(y))
+      clear_row(y);
+  }
+}
+
 void stick_current_shape() {
   bool shape[SHAPE_SIZE][SHAPE_SIZE];
   get_shape(current_shape.index, current_shape.rotation, shape);
@@ -349,6 +374,8 @@ void stick_current_shape() {
   }
 
   can_hold = true;
+
+  clear_current_shape_rows();
 }
 
 void switch_hold() {
