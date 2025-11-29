@@ -27,7 +27,7 @@
 #define SHAPE_SIZE (4)
 #define ROTATION_COUNT (4)
 
-#define TET_KEY_UP ('w')
+#define TET_KEY_ROT ('w')
 #define TET_KEY_LEFT ('a')
 #define TET_KEY_DOWN ('s')
 #define TET_KEY_RIGHT ('d')
@@ -385,7 +385,7 @@ void handle_keys() {
       }
       break;
     }
-    case TET_KEY_UP: {
+    case TET_KEY_ROT: {
       int next_rotation = (current_shape.rotation + 1) % ROTATION_COUNT;
       if (!is_shape_hit(current_shape.index, next_rotation, current_shape.x,
                         current_shape.y)) {
