@@ -7,4 +7,4 @@ $(BUILD)/frame.o: $(BUILD) frame.c frame.h
 	gcc -c frame.c -o $@
 
 $(BUILD):
-	mkdir $(BUILD)
+	mkdir -p $(BUILD)
