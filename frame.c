@@ -2,24 +2,6 @@
 #include <ncurses.h>
 #include <string.h>
 
-#ifndef FRAME_HO
-#define FRAME_HO ('~')
-#endif // !FRAME_HO
-
-#ifndef FRAME_VE
-#define FRAME_VE ('|')
-#endif // !FRAME_VE
-
-#ifndef FRAME_CO
-#define FRAME_CO ('+')
-#endif // !FRAME_CO
-
-#ifndef FRAME_TITLE_PADDING
-#define FRAME_TITLE_PADDING (1)
-#endif // !FRAME_TITLE_PADDING
-
-#define MAX_FRAMES (5)
-
 static struct Frame frames[MAX_FRAMES] = {};
 static int frame_count = 0;
 
