@@ -37,9 +37,6 @@ void draw_frame_sides(struct Frame frame, WINDOW *screen) {
     mvwaddch(screen, y, frame.x, FRAME_VE);
     mvwaddch(screen, y, frame.x + frame.w, FRAME_VE);
   }
-  if (frame.title && strlen(frame.title) + FRAME_TITLE_PADDING < frame.w) {
-    mvwaddstr(screen, frame.y, frame.x + FRAME_TITLE_PADDING + 1, frame.title);
-  }
 }
 
 void add_frame(struct Frame frame) { frames[frame_count++] = frame; }
@@ -66,6 +63,13 @@ void draw_frames(WINDOW *screen) {
   for (int corner_ind = 0; corner_ind < corners_count; corner_ind++) {
     struct Corner corner = corners[corner_ind];
     mvwaddch(screen, corner.y, corner.x, FRAME_CO);
+  }
+  for (int frame_ind = 0; frame_ind < frame_count; frame_ind++) {
+    struct Frame frame = frames[frame_ind];
+    if (frame.title && strlen(frame.title) + FRAME_TITLE_PADDING < frame.w) {
+      mvwaddstr(screen, frame.y, frame.x + FRAME_TITLE_PADDING + 1,
+                frame.title);
+    }
   }
 }
 void clean_frames() { frame_count = 0; }
