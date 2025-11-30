@@ -28,6 +28,7 @@
 #define NEXT_SHAPES (3)
 #define SHAPE_SIZE (4)
 #define ROTATION_COUNT (4)
+#define LINES_CLEARED_PER_LEVEL (10)
 
 #define TET_KEY_ROT ('w')
 #define TET_KEY_LEFT ('a')
@@ -45,6 +46,11 @@ static float game_tic = 500.0f, counting_game_tic = 0;
 static bool shouldQuit = false;
 static int hold_shape = -1;
 static bool can_hold = true;
+static size_t score = 0;
+static size_t level = 0;
+static size_t rows_cleared_since_last_level_up = 0;
+
+static const size_t lines_cleared_to_score_multiplier[] = {40, 100, 300, 1200};
 
 typedef uint8_t color;
 
@@ -273,7 +279,8 @@ void draw_dev_data(float elapsedTime) {
   attron(COLOR_PAIR(DEV_DATA));
 
   char buff[50];
-  snprintf(buff, 50, "FPS: %f", 1000.0f / elapsedTime);
+  snprintf(buff, sizeof(buff) / sizeof(buff[0]), "FPS: %f",
+           1000.0f / elapsedTime);
   mvwprintw(SCREEN, 0, 0, buff);
   attroff(COLOR_PAIR(DEV_DATA));
 }
@@ -292,12 +299,42 @@ void draw_hold_shape() {
   add_frame(frame);
 }
 
+void draw_stats() {
+  char buff[50];
+
+  attron(COLOR_PAIR(FRAME));
+
+  int start_x = board_start_x - 1 - scale_x * SHAPE_SIZE;
+  int start_y = board_start_y + SHAPE_SIZE * scale_y;
+  int current_text_y = start_y + 1;
+  mvwprintw(SCREEN, current_text_y++, start_x, "SCORE:");
+
+  snprintf(buff, sizeof(buff) / sizeof(buff[0]), "%lu", score);
+  mvwprintw(SCREEN, current_text_y++, start_x, buff);
+
+  mvwprintw(SCREEN, current_text_y++, start_x, "Level:");
+
+  snprintf(buff, sizeof(buff) / sizeof(buff[0]), "%lu", level);
+  mvwprintw(SCREEN, current_text_y++, start_x, buff);
+
+  struct Frame frame = {
+      .x = start_x - 1,
+      .y = start_y,
+      .w = SHAPE_SIZE * scale_x + 1,
+      .h = current_text_y - start_y,
+  };
+  add_frame(frame);
+
+  attroff(COLOR_PAIR(FRAME));
+}
+
 void draw(float elapsedTime) {
   clean_frames();
   draw_bg();
   draw_board();
   draw_hold_shape();
   draw_next_shapes();
+  draw_stats();
 
   attron(COLOR_PAIR(FRAME));
   draw_frames(SCREEN);
@@ -355,11 +392,15 @@ void clear_row(int y) {
   for (int x = 0; x < BOARD_WIDTH; x++)
     board[0][x] = BOARD_EMPTY;
 }
-void clear_current_shape_rows() {
+size_t clear_current_shape_rows() {
+  size_t rows_cleared = 0;
   for (size_t y = current_shape.y; y < current_shape.y + SHAPE_SIZE; y++) {
-    if (is_row_filled(y))
+    if (is_row_filled(y)) {
       clear_row(y);
+      rows_cleared++;
+    }
   }
+  return rows_cleared;
 }
 
 void stick_current_shape() {
@@ -375,7 +416,16 @@ void stick_current_shape() {
 
   can_hold = true;
 
-  clear_current_shape_rows();
+  size_t rows_cleared = clear_current_shape_rows();
+  if (rows_cleared > 0) {
+    // based on
+    // https://tetris.fandom.com/wiki/Scoring#Original_Nintendo_Scoring_System
+    score += lines_cleared_to_score_multiplier[rows_cleared - 1] * (level + 1);
+
+    rows_cleared_since_last_level_up += rows_cleared;
+    level += rows_cleared_since_last_level_up / (size_t)LINES_CLEARED_PER_LEVEL;
+    rows_cleared_since_last_level_up %= (size_t)LINES_CLEARED_PER_LEVEL;
+  }
 }
 
 void switch_hold() {
