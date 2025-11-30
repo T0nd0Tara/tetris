@@ -535,7 +535,7 @@ void loop(float elapsedTime) {
 
   refresh();
 }
-int main(int argc, char **argv) {
+int init() {
   initscr(); // Init the library.
   noecho();  // Do not echo user input.
   cbreak();  // Do not buffer user input, retain Ctrl-Z & Ctrl-C functions.
@@ -561,6 +561,12 @@ int main(int argc, char **argv) {
     next_shapes[next_shape_it] = rand() % shapes_len;
   }
   next_shape();
+  return 0;
+}
+int main(int argc, char **argv) {
+  int ret;
+  if (ret = init(), ret)
+    return ret;
 
   float wantedFrameTimeMS = 1000.0f / FPS;
 
