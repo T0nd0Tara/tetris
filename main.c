@@ -6,6 +6,7 @@
 #include <ncurses.h>
 #endif
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -42,7 +43,7 @@ static int screen_width, screen_height;
 
 static int scale_y, scale_x;
 static int board_start_y, board_start_x;
-static float game_tic = 500.0f, counting_game_tic = 0;
+static float game_tic = 1000.0f, counting_game_tic = 0;
 static bool shouldQuit = false;
 static int hold_shape = -1;
 static bool can_hold = true;
@@ -426,6 +427,9 @@ void stick_current_shape() {
     rows_cleared_since_last_level_up += rows_cleared;
     level += rows_cleared_since_last_level_up / (size_t)LINES_CLEARED_PER_LEVEL;
     rows_cleared_since_last_level_up %= (size_t)LINES_CLEARED_PER_LEVEL;
+
+    // according to https://tetris.wiki/Marathon
+    game_tic = 1000.0f * powf(0.8 - (level * 0.007), (float)level);
   }
 }
 
