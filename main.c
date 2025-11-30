@@ -322,6 +322,7 @@ void draw_stats() {
       .y = start_y,
       .w = SHAPE_SIZE * scale_x + 1,
       .h = current_text_y - start_y,
+      .title = "Stats",
   };
   add_frame(frame);
 
